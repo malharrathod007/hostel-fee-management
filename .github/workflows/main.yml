@@ -9,17 +9,18 @@ env:
   DEPLOY_PATH: /var/www/html/hostel_fees
 
 jobs:
-  # --- BUILD JOB ---
   build:
     name: Build Assets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Node.js
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: 'npm'
 
       - name: Install NPM dependencies & Build
         run: |
@@ -31,8 +32,8 @@ jobs:
         with:
           name: frontend-assets
           path: public/build/
+          retention-days: 1
 
-  # --- DEPLOY JOB ---
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
@@ -41,9 +42,10 @@ jobs:
     environment: production
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Download build artifacts
+      - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: frontend-assets
@@ -52,41 +54,43 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.SERVER_IP }} # Use Secret for security
+          host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}          # Pass variables to the remote shell
           envs: DEPLOY_PATH,PHP_VERSION,DB_HOST,DB_PORT,DB_DATABASE,DB_USERNAME,DB_PASSWORD
           script: |
-            set -e # Exit immediately if a command fails
-            echo "Deploying to: ${DEPLOY_PATH}"
+            set -e
+            echo "Starting Deployment to ${DEPLOY_PATH}"
+            
             cd ${DEPLOY_PATH}
 
-            # Enable maintenance mode
+            # 1. Maintenance Mode
             php artisan down --retry=60 || true
 
-            # Pull latest code
+            # 2. Update Source
             git fetch origin main
             git reset --hard origin/main
 
-            # Configure Database in .env
+            # 3. Update Environment (Silent Injection)
             sed -i "s|^DB_HOST=.*|DB_HOST=${DB_HOST}|" .env
             sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE}|" .env
             sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME}|" .env
             sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" .env
 
-            # Install dependencies
+            # 4. Install PHP Dependencies
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-            # Database & Cache
+            # 5. Database & Optimization
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-
-            # Link storage
+            
+            # 6. File System
             php artisan storage:link || true
+            chmod -R 775 storage bootstrap/cache
 
-            # PM2 Management
+            # 7. Process Management (PM2)
             if pm2 describe ecosystem.config.js > /dev/null 2>&1; then
               pm2 restart ecosystem.config.js
             else
@@ -94,15 +98,14 @@ jobs:
             fi
             pm2 save
 
-            # Disable maintenance mode
+            # 8. Finalize
             php artisan up
-
-            # Reload PHP-FPM
             sudo systemctl reload php${PHP_VERSION}-fpm || true
+            
+            echo "✅ Deployment Successful!"
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-               
