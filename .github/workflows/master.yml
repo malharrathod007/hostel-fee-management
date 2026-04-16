@@ -60,10 +60,9 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
+          username: ${{ secrets.SSH_USER }}
           host: ${{ secrets.SERVER_IP }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: DEPLOY_PATH,PHP_VERSION,DB_HOST,DB_PORT,DB_DATABASE,DB_USERNAME,DB_PASSWORD
           script: |
             set -e
@@ -75,8 +74,8 @@ jobs:
             php artisan down --retry=60 || true
 
             # 2. Update Source
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch origin master
+            git reset --hard origin/master
 
             # 3. Update Environment (Silent Injection)
             sed -i "s|^DB_HOST=.*|DB_HOST=${DB_HOST}|" .env
