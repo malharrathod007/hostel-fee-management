@@ -95,9 +95,9 @@ jobs:
 
             # 7. Process Management (PM2)
             if pm2 describe ecosystem.config.js > /dev/null 2>&1; then
-              pm2 restart ecosystem.config.js
+              pm2 restart ecosystem.config.cjs
             else
-              pm2 start ecosystem.config.js
+              pm2 start ecosystem.config.cjs
             fi
             pm2 save
 
