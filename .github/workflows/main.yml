@@ -23,7 +23,7 @@ jobs:
           node-version: "20"
 
       - name: Install NPM dependencies
-        run: npm install
+        run: npm install --force
         working-directory: ${{ env.PROJECT_ROOT }}
 
       - name: Build Assets
