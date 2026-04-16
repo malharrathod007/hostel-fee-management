@@ -1,0 +1,14 @@
+module.exports = {
+  apps: [
+    {
+      name: 'hostel-fees',
+      script: 'artisan',
+      interpreter: 'php',
+      args: 'queue:work --sleep=3 --tries=3',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '256M',
+    }
+  ]
+};
