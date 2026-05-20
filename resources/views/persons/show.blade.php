@@ -13,60 +13,86 @@
 
 @section('content')
     <!-- Person Info Card -->
-    <div class="card-custom p-4 mb-4">
-        <div class="row">
-            <div class="col-md-6">
-                <h6 class="fw-600 text-primary mb-3"><i class="bi bi-person me-1"></i> Personal Info</h6>
-                <table class="table table-borderless table-sm">
-                    <tr><td class="text-muted" style="width:140px;">Name</td><td class="fw-500">{{ $person->name }}</td></tr>
-                    <tr><td class="text-muted">Email</td><td>{{ $person->email ?? '-' }}</td></tr>
-                    <tr><td class="text-muted">Phone</td><td>{{ $person->phone ?? '-' }}</td></tr>
-                    <tr><td class="text-muted">Aadhar</td><td>{{ $person->aadhar_number ?? '-' }}</td></tr>
-                    <tr><td class="text-muted">Address</td><td>{{ $person->address ?? '-' }}</td></tr>
-                    <tr><td class="text-muted">Status</td><td>
-                        @if($person->is_active)
-                            <span class="badge badge-paid">Active</span>
-                        @else
-                            <span class="badge badge-pending">Inactive</span>
-                        @endif
-                    </td></tr>
-                </table>
+    <div class="card-custom p-3 p-md-4 mb-4">
+        <div class="row g-0 g-md-3">
+            <div class="col-12 col-md-6 mb-3 mb-md-0">
+                <h6 class="fw-600 text-primary mb-2 mb-md-3" style="font-size:0.85rem;">
+                    <i class="bi bi-person me-1"></i> Personal Info
+                </h6>
+                <div class="info-list">
+                    <div class="info-row"><span class="info-label">Name</span><span class="fw-500">{{ $person->name }}</span></div>
+                    <div class="info-row"><span class="info-label">Email</span><span>{{ $person->email ?? '-' }}</span></div>
+                    <div class="info-row"><span class="info-label">Phone</span><span>{{ $person->phone ?? '-' }}</span></div>
+                    <div class="info-row"><span class="info-label">Aadhar</span><span>{{ $person->aadhar_number ?? '-' }}</span></div>
+                    <div class="info-row"><span class="info-label">City</span><span>{{ $person->city ?? '-' }}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span><span>{{ $person->address ?? '-' }}</span></div>
+                    <div class="info-row"><span class="info-label">Deposit</span><span class="fw-500" style="color:var(--success);">₹{{ number_format($person->deposit ?? 0) }}</span></div>
+                    <div class="info-row"><span class="info-label">Status</span>
+                        <span>@if($person->is_active)<span class="badge badge-paid">Active</span>@else<span class="badge badge-pending">Inactive</span>@endif</span>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6">
-                <h6 class="fw-600 text-primary mb-3"><i class="bi bi-shield me-1"></i> Guardian & Room</h6>
-                <table class="table table-borderless table-sm">
-                    <tr><td class="text-muted" style="width:140px;">Guardian</td><td>{{ $person->guardian_name ?? '-' }}</td></tr>
-                    <tr><td class="text-muted">Guardian Phone</td><td>{{ $person->guardian_phone ?? '-' }}</td></tr>
-                    <tr><td class="text-muted">Room</td><td>
-                        <a href="{{ route('rooms.show', $person->room) }}">Room {{ $person->room->room_number }}</a>
-                    </td></tr>
-                    <tr><td class="text-muted">Type</td><td class="fw-500">{{ ucfirst($person->person_type ?? 'student') }}</td></tr>
-                    <tr><td class="text-muted">Fee</td><td class="fw-500">₹{{ number_format(($person->person_type ?? 'student') === 'employee' ? $person->room->employee_rent : $person->room->student_rent) }}/month</td></tr>
-                    <tr><td class="text-muted">Join Date</td><td>{{ $person->join_date->format('d M Y') }}</td></tr>
-                    <tr><td class="text-muted">Notes</td><td>{{ $person->notes ?? '-' }}</td></tr>
-                </table>
+            <div class="col-12 col-md-6">
+                <h6 class="fw-600 text-primary mb-2 mb-md-3" style="font-size:0.85rem;">
+                    <i class="bi bi-shield me-1"></i> Guardian &amp; Room
+                </h6>
+                <div class="info-list">
+                    <div class="info-row"><span class="info-label">Guardian</span><span>{{ $person->guardian_name ?? '-' }}</span></div>
+                    <div class="info-row"><span class="info-label">G. Phone</span><span>{{ $person->guardian_phone ?? '-' }}</span></div>
+                    <div class="info-row"><span class="info-label">Room</span>
+                        <span><a href="{{ route('rooms.show', $person->room) }}">Room {{ $person->room->room_number }}</a></span>
+                    </div>
+                    <div class="info-row"><span class="info-label">Type</span><span class="fw-500">{{ ucfirst($person->person_type ?? 'student') }}</span></div>
+                    <div class="info-row"><span class="info-label">Monthly Fee</span><span class="fw-500">₹{{ number_format(($person->person_type ?? 'student') === 'employee' ? $person->room->employee_rent : $person->room->student_rent) }}</span></div>
+                    <div class="info-row"><span class="info-label">Join Date</span><span>{{ $person->join_date->format('d M Y') }}</span></div>
+                    <div class="info-row"><span class="info-label">Notes</span><span>{{ $person->notes ?? '-' }}</span></div>
+                </div>
             </div>
         </div>
     </div>
 
+    <style>
+        .info-list { display: flex; flex-direction: column; gap: 0; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.45rem 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.83rem;
+            gap: 0.5rem;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.78rem;
+            flex-shrink: 0;
+            min-width: 80px;
+        }
+        @media (max-width: 768px) {
+            .info-label { min-width: 72px; }
+        }
+    </style>
+
     <!-- Fee Summary -->
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="stat-card">
-                <div class="stat-label">Total Paid</div>
-                <div class="stat-value" style="color:var(--success);">₹{{ number_format($person->total_paid) }}</div>
+        <div class="col-4">
+            <div class="stat-card text-center">
+                <div class="stat-label">Paid</div>
+                <div class="stat-value" style="color:var(--success);font-size:1.15rem;">₹{{ number_format($person->total_paid) }}</div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="stat-card">
-                <div class="stat-label">Total Pending</div>
-                <div class="stat-value" style="color:var(--warning);">₹{{ number_format($person->total_pending) }}</div>
+        <div class="col-4">
+            <div class="stat-card text-center">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" style="color:var(--warning);font-size:1.15rem;">₹{{ number_format($person->total_pending) }}</div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="stat-card">
-                <div class="stat-label">Total Entries</div>
-                <div class="stat-value">{{ $person->fees->count() }}</div>
+        <div class="col-4">
+            <div class="stat-card text-center">
+                <div class="stat-label">Entries</div>
+                <div class="stat-value" style="font-size:1.15rem;">{{ $person->fees->count() }}</div>
             </div>
         </div>
     </div>

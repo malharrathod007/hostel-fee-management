@@ -12,7 +12,7 @@ class Person extends Model
     protected $table = 'persons';
 
     protected $fillable = [
-        'name', 'email', 'phone', 'address', 'aadhar_number',
+        'name', 'email', 'phone', 'address', 'city', 'deposit', 'aadhar_number',
         'guardian_name', 'guardian_phone', 'room_id', 'person_type',
         'join_date', 'is_active', 'notes'
     ];

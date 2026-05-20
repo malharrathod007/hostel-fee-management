@@ -12,7 +12,7 @@
     <!-- Filter -->
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small fw-500">Quarter</label>
                 <select name="quarter" class="form-select form-select-sm">
                     <option value="1" {{ $quarter == 1 ? 'selected' : '' }}>Q1 (Jan-Mar)</option>
@@ -21,7 +21,7 @@
                     <option value="4" {{ $quarter == 4 ? 'selected' : '' }}>Q4 (Oct-Dec)</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small fw-500">Year</label>
                 <select name="year" class="form-select form-select-sm">
                     @foreach($years as $y)
@@ -29,7 +29,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-12 col-md-2">
                 <button class="btn btn-sm btn-primary w-100"><i class="bi bi-search me-1"></i> View</button>
             </div>
         </form>
@@ -37,19 +37,19 @@
 
     <!-- Summary -->
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-4">
             <div class="stat-card text-center">
-                <div class="stat-label">Quarter Total</div>
+                <div class="stat-label">Total</div>
                 <div class="stat-value">₹{{ number_format($totalAmount) }}</div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Collected</div>
                 <div class="stat-value" style="color:var(--success)">₹{{ number_format($totalPaid) }}</div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Pending</div>
                 <div class="stat-value" style="color:var(--warning)">₹{{ number_format($totalPending) }}</div>

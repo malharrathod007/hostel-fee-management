@@ -34,6 +34,16 @@
                                 pattern="[0-9]{12}" inputmode="numeric" required
                                 value="{{ old('aadhar_number', $person->aadhar_number ?? '') }}" placeholder="12-digit Aadhar">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-500">City</label>
+                            <input type="text" name="city" class="form-control" placeholder="e.g. Mumbai"
+                                value="{{ old('city', $person->city ?? '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-500">Deposit Amount (₹)</label>
+                            <input type="number" name="deposit" class="form-control" min="0" step="0.01" placeholder="0"
+                                value="{{ old('deposit', $person->deposit ?? '') }}">
+                        </div>
                         <div class="col-12">
                             <label class="form-label fw-500">Address</label>
                             <textarea name="address" class="form-control" rows="2">{{ old('address', $person->address ?? '') }}</textarea>

@@ -12,12 +12,12 @@
     <!-- Filters -->
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <label class="form-label small fw-500">Search</label>
                 <input type="text" name="search" class="form-control form-control-sm" placeholder="Name, phone, Aadhar..."
                     value="{{ request('search') }}">
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small fw-500">Room</label>
                 <select name="room_id" class="form-select form-select-sm">
                     <option value="">All Rooms</option>
@@ -28,7 +28,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small fw-500">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All</option>
@@ -36,10 +36,10 @@
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <button class="btn btn-sm btn-primary w-100"><i class="bi bi-search me-1"></i> Filter</button>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <a href="{{ route('persons.index') }}" class="btn btn-sm btn-outline-secondary w-100">Clear</a>
             </div>
         </form>

@@ -20,21 +20,22 @@
                             <small class="text-muted">Floor: {{ $room->floor }}</small>
                         @endif
                     </div>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="bi bi-three-dots"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('rooms.show', $room) }}"><i class="bi bi-eye me-2"></i>View</a></li>
-                            <li><a class="dropdown-item" href="{{ route('rooms.edit', $room) }}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form action="{{ route('rooms.destroy', $room) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this room?')">
-                                    @csrf @method('DELETE')
-                                    <button class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete</button>
-                                </form>
-                            </li>
-                        </ul>
+                    <!-- Direct action buttons — no dropdown, avoids overflow:hidden clipping -->
+                    <div class="d-flex gap-1">
+                        <a href="{{ route('rooms.show', $room) }}" class="btn btn-sm btn-outline-secondary" title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{{ route('rooms.edit', $room) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ route('rooms.destroy', $room) }}" method="POST"
+                              onsubmit="return confirm('Are you sure you want to delete this room?')"
+                              style="display:inline;">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
 
@@ -51,8 +52,9 @@
 
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="fw-600 text-primary" style="font-size:0.85rem;">S: ₹{{ number_format($room->student_rent) }} / E: ₹{{ number_format($room->employee_rent) }}</span>
-                    <a href="{{ route('persons.create', ['room_id' => $room->id]) }}" class="btn btn-sm btn-outline-primary {{ $room->persons_count >= $room->capacity ? 'disabled' : '' }}">
-                        <i class="bi bi-person-plus"></i> Add Person
+                    <a href="{{ route('persons.create', ['room_id' => $room->id]) }}"
+                       class="btn btn-sm btn-outline-success {{ $room->persons_count >= $room->capacity ? 'disabled' : '' }}">
+                        <i class="bi bi-person-plus"></i> Add
                     </a>
                 </div>
             </div>

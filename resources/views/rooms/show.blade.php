@@ -13,25 +13,25 @@
 
 @section('content')
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
                 <div class="stat-label">Floor</div>
                 <div class="stat-value" style="font-size:1.2rem;">{{ $room->floor ?? 'N/A' }}</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
                 <div class="stat-label">Capacity</div>
                 <div class="stat-value" style="font-size:1.2rem;">{{ $room->occupancy }} / {{ $room->capacity }}</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
-                <div class="stat-label">Student / Employee Fee</div>
-                <div class="stat-value" style="font-size:1.2rem;">₹{{ number_format($room->student_rent) }} / ₹{{ number_format($room->employee_rent) }}</div>
+                <div class="stat-label">Student / Employee</div>
+                <div class="stat-value" style="font-size:1rem;">₹{{ number_format($room->student_rent) }} / ₹{{ number_format($room->employee_rent) }}</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
                 <div class="stat-label">Status</div>
                 <div class="stat-value" style="font-size:1.2rem;">

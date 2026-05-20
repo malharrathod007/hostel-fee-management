@@ -3,11 +3,11 @@
 @section('page_title', 'Dashboard')
 
 @section('content')
-    <!-- Stats Cards -->
+    <!-- Stats Cards — 2×2 on mobile, 4 across on desktop -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3 col-sm-6">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 gap-md-3">
                     <div class="stat-icon" style="background:#ede9fe;color:#7c3aed;">
                         <i class="bi bi-door-open-fill"></i>
                     </div>
@@ -18,9 +18,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 gap-md-3">
                     <div class="stat-icon" style="background:#dbeafe;color:#2563eb;">
                         <i class="bi bi-people-fill"></i>
                     </div>
@@ -31,28 +31,28 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 gap-md-3">
                     <div class="stat-icon" style="background:#d1fae5;color:#059669;">
                         <i class="bi bi-cash-stack"></i>
                     </div>
                     <div>
                         <div class="stat-value">₹{{ number_format($totalCollected) }}</div>
-                        <div class="stat-label">Collected (This Month)</div>
+                        <div class="stat-label">Collected (Month)</div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
+        <div class="col-6 col-md-3">
             <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 gap-md-3">
                     <div class="stat-icon" style="background:#fef3c7;color:#d97706;">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                     </div>
                     <div>
                         <div class="stat-value">₹{{ number_format($totalPending) }}</div>
-                        <div class="stat-label">Pending (This Year)</div>
+                        <div class="stat-label">Pending (Year)</div>
                     </div>
                 </div>
             </div>

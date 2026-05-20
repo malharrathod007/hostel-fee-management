@@ -12,7 +12,7 @@
     <!-- Filter -->
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
                 <label class="form-label small fw-500">Select Person</label>
                 <select name="person_id" class="form-select form-select-sm" required>
                     <option value="">Choose a person...</option>
@@ -23,7 +23,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small fw-500">Year</label>
                 <select name="year" class="form-select form-select-sm">
                     @foreach($years as $y)
@@ -31,7 +31,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <button class="btn btn-sm btn-primary w-100"><i class="bi bi-search me-1"></i> View</button>
             </div>
         </form>

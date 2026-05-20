@@ -15,7 +15,7 @@
     <!-- Filters -->
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small fw-500">Month</label>
                 <select name="month" class="form-select form-select-sm">
                     <option value="">All</option>
@@ -26,7 +26,7 @@
                     @endfor
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small fw-500">Year</label>
                 <select name="year" class="form-select form-select-sm">
                     <option value="">All</option>
@@ -38,7 +38,7 @@
                     @endif
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small fw-500">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All</option>
@@ -47,7 +47,7 @@
                     <option value="partial" {{ request('status') == 'partial' ? 'selected' : '' }}>Partial</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small fw-500">Person</label>
                 <select name="person_id" class="form-select form-select-sm">
                     <option value="">All</option>
@@ -58,10 +58,10 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <button class="btn btn-sm btn-primary w-100"><i class="bi bi-search me-1"></i> Filter</button>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <a href="{{ route('fees.index') }}" class="btn btn-sm btn-outline-secondary w-100">Clear</a>
             </div>
         </form>
@@ -70,19 +70,19 @@
     <!-- Summary -->
     @if($fees->isNotEmpty())
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-4">
             <div class="stat-card text-center">
-                <div class="stat-label">Total Amount</div>
+                <div class="stat-label">Total</div>
                 <div class="stat-value">₹{{ number_format($fees->sum('amount')) }}</div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Paid</div>
                 <div class="stat-value" style="color:var(--success)">₹{{ number_format($fees->where('status','paid')->sum('amount')) }}</div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Pending</div>
                 <div class="stat-value" style="color:var(--warning)">₹{{ number_format($fees->where('status','pending')->sum('amount')) }}</div>
