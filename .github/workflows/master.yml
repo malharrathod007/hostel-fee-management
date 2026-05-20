@@ -61,7 +61,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            set -e
+            cd /var/www/8c9b1c5a-6533-4986-80f0-4149ec8ce405/public_html/Hostel
             echo "Starting Deployment to ${DEPLOY_PATH}"
             
             cd ${DEPLOY_PATH}
