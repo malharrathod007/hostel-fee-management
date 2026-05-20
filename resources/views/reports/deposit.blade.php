@@ -3,6 +3,9 @@
 @section('page_title', 'Deposit Report')
 
 @section('top_actions')
+    <a href="{{ route('reports.deposit.export') }}?{{ http_build_query(request()->only(['search','city','room_id','status'])) }}" class="btn btn-sm btn-outline-success me-1">
+        <i class="bi bi-file-earmark-excel me-1"></i> Export
+    </a>
     <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-printer me-1"></i> Print
     </button>

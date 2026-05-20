@@ -35,6 +35,65 @@ class FeeController extends Controller
         return view('fees.index', compact('fees', 'persons', 'years'));
     }
 
+    public function export(Request $request)
+    {
+        $query = Fee::with('person.room');
+
+        if ($request->filled('month')) {
+            $query->where('fee_month', $request->month);
+        }
+        if ($request->filled('year')) {
+            $query->where('fee_year', $request->year);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('person_id')) {
+            $query->where('person_id', $request->person_id);
+        }
+
+        $fees = $query->orderBy('fee_year', 'desc')
+                      ->orderBy('fee_month', 'desc')
+                      ->get();
+
+        $filename = 'fees_' . date('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+        ];
+
+        $callback = function () use ($fees) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, [
+                '#', 'Person Name', 'Room', 'Month', 'Year',
+                'Amount (₹)', 'Status', 'Paid Date', 'Notes',
+            ]);
+
+            foreach ($fees as $i => $fee) {
+                fputcsv($handle, [
+                    $i + 1,
+                    $fee->person->name ?? '',
+                    $fee->person->room->room_number ?? '',
+                    $fee->month_name ?? date('F', mktime(0, 0, 0, $fee->fee_month, 1)),
+                    $fee->fee_year,
+                    $fee->amount,
+                    ucfirst($fee->status),
+                    $fee->paid_date ? $fee->paid_date->format('Y-m-d') : '',
+                    $fee->notes ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function create(Request $request)
     {
         $persons = Person::where('is_active', true)->with('room')->orderBy('name')->get();
