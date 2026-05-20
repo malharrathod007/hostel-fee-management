@@ -6,7 +6,7 @@ on:
 
 env:
   PHP_VERSION: "8.2"
-  DEPLOY_PATH: /var/www/html/hostel_fees/hostel-fee-management
+  DEPLOY_PATH: /home/ramimali1/public_html/Hostel
   PROJECT_ROOT: .
 
 jobs:
