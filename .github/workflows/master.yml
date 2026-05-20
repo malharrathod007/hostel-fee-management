@@ -60,7 +60,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           host: ${{ secrets.SERVER_IP }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          envs: DEPLOY_PATH,PHP_VERSION,DB_HOST,DB_PORT,DB_DATABASE,DB_USERNAME,DB_PASSWORD
           script: |
             set -e
             echo "Starting Deployment to ${DEPLOY_PATH}"
@@ -74,17 +73,10 @@ jobs:
             # 2. Maintenance Mode
             php artisan down --retry=60 || true
 
-            # 3. Update Environment (Silent Injection)
-            perl -pi -e "s/^DB_HOST=.*/DB_HOST='${DB_HOST}'/" .env
-            perl -pi -e "s/^DB_PORT=.*/DB_PORT='${DB_PORT}'/" .env
-            perl -pi -e "s/^DB_DATABASE=.*/DB_DATABASE='${DB_DATABASE}'/" .env
-            perl -pi -e "s/^DB_USERNAME=.*/DB_USERNAME='${DB_USERNAME}'/" .env
-            perl -pi -e "s/^DB_PASSWORD=.*/DB_PASSWORD='${DB_PASSWORD}'/" .env
-
-            # 4. Install PHP Dependencies
+            # 3. Install PHP Dependencies
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-            # Build assets on server
+            # 4. Build assets on server
             npm ci
             npm run build
 
