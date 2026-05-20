@@ -67,18 +67,19 @@ jobs:
             
             cd ${DEPLOY_PATH}
 
-            # 1. Maintenance Mode
-            php artisan down --retry=60 || true
-
-            # 2. Update Source
+            # 1. Update Source
             git fetch origin master
             git reset --hard origin/master
+            
+            # 2. Maintenance Mode
+            php artisan down --retry=60 || true
 
             # 3. Update Environment (Silent Injection)
-            sed -i "s|^DB_HOST=.*|DB_HOST=${DB_HOST}|" .env
-            sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE}|" .env
-            sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME}|" .env
-            sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" .env
+            perl -pi -e "s/^DB_HOST=.*/DB_HOST='${DB_HOST}'/" .env
+            perl -pi -e "s/^DB_PORT=.*/DB_PORT='${DB_PORT}'/" .env
+            perl -pi -e "s/^DB_DATABASE=.*/DB_DATABASE='${DB_DATABASE}'/" .env
+            perl -pi -e "s/^DB_USERNAME=.*/DB_USERNAME='${DB_USERNAME}'/" .env
+            perl -pi -e "s/^DB_PASSWORD=.*/DB_PASSWORD='${DB_PASSWORD}'/" .env
 
             # 4. Install PHP Dependencies
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
@@ -93,17 +94,8 @@ jobs:
             php artisan storage:link || true
             chmod -R 775 storage bootstrap/cache
 
-            # 7. Process Management (PM2)
-            if pm2 describe ecosystem.config.js > /dev/null 2>&1; then
-              pm2 restart ecosystem.config.cjs
-            else
-              pm2 start ecosystem.config.cjs
-            fi
-            pm2 save
-
             # 8. Finalize
             php artisan up
-            sudo systemctl reload php${PHP_VERSION}-fpm || true
             
             echo "Deployment Successful!"
         env:
