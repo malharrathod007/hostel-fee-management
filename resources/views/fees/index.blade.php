@@ -6,6 +6,10 @@
     <button class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#generateModal">
         <i class="bi bi-lightning me-1"></i> Generate Monthly
     </button>
+    <a href="{{ route('fees.export') }}?{{ http_build_query(request()->only(['month','year','status','person_id'])) }}" class="btn btn-sm btn-outline-success me-1">
+        <i class="bi bi-file-earmark-excel me-1"></i>
+        <span class="d-none d-sm-inline">Export</span>
+    </a>
     <a href="{{ route('fees.create') }}" class="btn btn-sm btn-primary">
         <i class="bi bi-plus-lg me-1"></i> Add Fee
     </a>

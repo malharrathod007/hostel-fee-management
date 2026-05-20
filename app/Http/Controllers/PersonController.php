@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Person;
 use App\Models\Room;
+use App\Services\PersonCsvImporter;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -135,5 +136,129 @@ class PersonController extends Controller
     {
         $person->delete();
         return redirect()->route('persons.index')->with('success', 'Person removed successfully!');
+    }
+
+    /**
+     * Download a blank CSV template for bulk import.
+     */
+    public function downloadTemplate()
+    {
+        $csv = PersonCsvImporter::templateCsv();
+
+        return response($csv, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="persons_import_template.csv"',
+        ]);
+    }
+
+    /**
+     * Export persons list as CSV (Excel-compatible).
+     */
+    public function export(Request $request)
+    {
+        $query = Person::with('room');
+
+        if ($request->filled('room_id')) {
+            $query->where('room_id', $request->room_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('aadhar_number', 'like', "%{$search}%");
+            });
+        }
+
+        $persons = $query->orderBy('name')->get();
+
+        $filename = 'persons_' . date('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+        ];
+
+        $callback = function () use ($persons) {
+            $handle = fopen('php://output', 'w');
+            // UTF-8 BOM so Excel opens it correctly
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, [
+                '#', 'Name', 'Phone', 'Email', 'Aadhar Number',
+                'Room Number', 'Type', 'City', 'Address',
+                'Guardian Name', 'Guardian Phone',
+                'Join Date', 'Deposit', 'Status', 'Notes',
+            ]);
+
+            foreach ($persons as $i => $person) {
+                fputcsv($handle, [
+                    $i + 1,
+                    $person->name,
+                    $person->phone,
+                    $person->email ?? '',
+                    $person->aadhar_number,
+                    $person->room->room_number ?? '',
+                    ucfirst($person->person_type ?? 'student'),
+                    $person->city ?? '',
+                    $person->address ?? '',
+                    $person->guardian_name ?? '',
+                    $person->guardian_phone ?? '',
+                    $person->join_date ? $person->join_date->format('Y-m-d') : '',
+                    $person->deposit ?? '',
+                    $person->is_active ? 'Active' : 'Inactive',
+                    $person->notes ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Handle CSV upload and upsert persons.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ], [
+            'csv_file.required' => 'Please select a CSV file to upload.',
+            'csv_file.mimes'    => 'Only CSV files are supported. Export your Excel sheet as CSV first.',
+            'csv_file.max'      => 'File size must not exceed 2 MB.',
+        ]);
+
+        $path = $request->file('csv_file')->getRealPath();
+
+        try {
+            $importer = new PersonCsvImporter();
+            $results  = $importer->import($path);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['csv_file' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            return back()->withErrors(['csv_file' => 'Import failed: ' . $e->getMessage()]);
+        }
+
+        $created = count($results['created']);
+        $updated = count($results['updated']);
+        $skipped = count($results['skipped']);
+
+        // Build a detailed session summary
+        session()->flash('import_results', $results);
+
+        $msg = "Import complete — {$created} created, {$updated} updated";
+        if ($skipped > 0) {
+            $msg .= ", {$skipped} skipped (see details below)";
+        }
+        $msg .= '.';
+
+        return redirect()->route('persons.index')->with('success', $msg);
     }
 }

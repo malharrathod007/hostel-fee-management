@@ -677,7 +677,7 @@
     <!-- ── Sidebar ── -->
     <nav class="sidebar" id="sidebar" aria-label="Main navigation">
         <div class="sidebar-brand">
-            <h4><i class="bi bi-building"></i> Hostel Fee</h4>
+            <h4><i class="bi bi-building"></i> Hostel Fees</h4>
             <small>Fee Management System</small>
         </div>
         <div class="sidebar-nav">
