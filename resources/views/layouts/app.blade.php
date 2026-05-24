@@ -6,11 +6,11 @@
     <title>@yield('title', 'Hostel Fee Manager')</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%234f46e5'/><text x='2' y='13' font-size='13' font-family='sans-serif'>🏨</text></svg>">
     <!-- Bootstrap 5 -->
-    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link href="{{ asset('css/bootstrap-icons.min.css') }}" rel="stylesheet">
+    <link href="/css/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Google Fonts -->
-    <link href="{{ asset('css/poppins.css') }}" rel="stylesheet">
+    <link href="/css/poppins.css" rel="stylesheet">
     <style>
         :root {
             --primary: #4f46e5;
@@ -824,7 +824,7 @@
     </div>
     @endif
 
-    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
     <script>
     (function () {
 
