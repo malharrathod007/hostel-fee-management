@@ -7,7 +7,6 @@ on:
 env:
   PHP_VERSION: "8.2"
   DEPLOY_PATH: /var/www/8c9b1c5a-6533-4986-80f0-4149ec8ce405/public_html/Hostel
-  PROJECT_ROOT: .
 
 jobs:
   build:
@@ -24,11 +23,9 @@ jobs:
 
       - name: Install NPM dependencies
         run: npm ci
-        working-directory: ${{ env.PROJECT_ROOT }}
 
       - name: Build Assets
         run: npm run build
-        working-directory: ${{ env.PROJECT_ROOT }}    
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -54,6 +51,15 @@ jobs:
           name: frontend-assets
           path: public/build/
 
+      - name: Transfer Build Artifacts to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "public/build/"
+          target: "${{ env.DEPLOY_PATH }}"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -61,36 +67,32 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd /var/www/8c9b1c5a-6533-4986-80f0-4149ec8ce405/public_html/Hostel
-            echo "Starting Deployment to ${DEPLOY_PATH}"
-            
-            cd ${DEPLOY_PATH}
+            set -e
+            DEPLOY_PATH="/var/www/8c9b1c5a-6533-4986-80f0-4149ec8ce405/public_html/Hostel"
+            cd "$DEPLOY_PATH"
+            echo "Starting Deployment at $DEPLOY_PATH"
 
-            # 1. Update Source
+            # 1. Update Source (public/build is gitignored, won't be touched)
             git fetch origin master
             git reset --hard origin/master
-            
+
             # 2. Maintenance Mode
             php artisan down --retry=60 || true
 
             # 3. Install PHP Dependencies
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-            # 4. Build assets on server
-            npm ci
-            npm run build
-
-            # 5. Database & Optimization
+            # 4. Database & Optimization
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-            
-            # 6. File System
+
+            # 5. File System
             php artisan storage:link || true
             chmod -R 775 storage bootstrap/cache
 
-            # 8. Finalize
+            # 6. Finalize
             php artisan up
-            
+
             echo "Deployment Successful!"
