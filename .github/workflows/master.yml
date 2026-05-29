@@ -6,6 +6,7 @@ on:
 
 env:
   PHP_VERSION: "8.2"
+  NODE_VERSION: "20"
   DEPLOY_PATH: /var/www/8c9b1c5a-6533-4986-80f0-4149ec8ce405/public_html/Hostel
 
 jobs:
@@ -16,6 +17,25 @@ jobs:
     environment: production
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Build Assets
+        run: npm run build    
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -38,21 +58,17 @@ jobs:
             # 3. Install PHP Dependencies
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-            # 4. Build frontend assets on server
-            npm install
-            npm run build
-
-            # 5. Database & Optimization
+            # 4. Database & Optimization
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
 
-            # 6. File System
+            # 5. File System
             php artisan storage:link || true
             chmod -R 775 storage bootstrap/cache
 
-            # 7. Finalize
+            # 6. Finalize
             php artisan up
 
             echo "Deployment Successful!"
