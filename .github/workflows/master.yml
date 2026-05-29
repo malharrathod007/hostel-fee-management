@@ -39,7 +39,7 @@ jobs:
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
             # 4. Build frontend assets on server
-            npm ci --prefer-offline
+            npm install
             npm run build
 
             # 5. Database & Optimization
