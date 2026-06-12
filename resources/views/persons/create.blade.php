@@ -5,12 +5,16 @@
 @section('content')
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card-custom p-4">
+            <div class="card-custom">
+                <div class="card-header">
+                    <i class="bi bi-person-vcard me-2"></i>{{ isset($person) ? 'Person Details' : 'New Person Details' }}
+                </div>
+                <div class="p-3 p-md-4">
                 <form action="{{ isset($person) ? route('persons.update', $person) : route('persons.store') }}" method="POST">
                     @csrf
                     @if(isset($person)) @method('PUT') @endif
 
-                    <h6 class="fw-600 mb-3 text-primary"><i class="bi bi-person me-1"></i> Personal Details</h6>
+                    <div class="form-section-title"><i class="bi bi-person"></i> Personal Details</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label fw-500">Full Name <span class="text-danger">*</span></label>
@@ -50,7 +54,7 @@
                         </div>
                     </div>
 
-                    <h6 class="fw-600 mb-3 text-primary"><i class="bi bi-shield me-1"></i> Guardian Details</h6>
+                    <div class="form-section-title"><i class="bi bi-shield"></i> Guardian Details</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label fw-500">Guardian Name</label>
@@ -65,7 +69,7 @@
                         </div>
                     </div>
 
-                    <h6 class="fw-600 mb-3 text-primary"><i class="bi bi-door-open me-1"></i> Room Assignment</h6>
+                    <div class="form-section-title"><i class="bi bi-door-open"></i> Room Assignment</div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label fw-500">Room <span class="text-danger">*</span></label>
@@ -103,19 +107,20 @@
                     </div>
                     @endif
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label fw-500">Notes</label>
                         <textarea name="notes" class="form-control" rows="2"
                             placeholder="Any additional notes...">{{ old('notes', $person->notes ?? '') }}</textarea>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary flex-grow-1 flex-md-grow-0">
                             <i class="bi bi-check-lg me-1"></i> {{ isset($person) ? 'Update Person' : 'Add Person' }}
                         </button>
                         <a href="{{ route('persons.index') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>

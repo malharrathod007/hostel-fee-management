@@ -17,7 +17,9 @@ class PersonController extends Controller
         if ($request->filled('room_id')) {
             $query->where('room_id', $request->room_id);
         }
-        if ($request->filled('status')) {
+        if ($request->status === 'deleted') {
+            $query->onlyTrashed();
+        } elseif ($request->filled('status')) {
             $query->where('is_active', $request->status === 'active');
         }
         if ($request->filled('search')) {
@@ -30,7 +32,8 @@ class PersonController extends Controller
         }
 
         $persons = $query->orderBy('name')->get();
-        $rooms = Room::orderBy('room_number')->get();
+        $rooms = Room::withCount(['persons' => fn ($q) => $q->where('is_active', true)])
+            ->orderBy('room_number')->get();
 
         return view('persons.index', compact('persons', 'rooms'));
     }
@@ -46,12 +49,12 @@ class PersonController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['nullable', 'email', Rule::unique('persons', 'email')],
-            'phone' => ['required', 'digits:10', 'regex:/^[6-9]\d{9}$/', Rule::unique('persons', 'phone')],
+            'email' => ['nullable', 'email', Rule::unique('persons', 'email')->whereNull('deleted_at')],
+            'phone' => ['required', 'digits:10', 'regex:/^[6-9]\d{9}$/', Rule::unique('persons', 'phone')->whereNull('deleted_at')],
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
             'deposit' => 'nullable|numeric|min:0',
-            'aadhar_number' => ['required', 'digits:12', Rule::unique('persons', 'aadhar_number')],
+            'aadhar_number' => ['required', 'digits:12', Rule::unique('persons', 'aadhar_number')->whereNull('deleted_at')],
             'guardian_name' => 'nullable|string|max:255',
             'guardian_phone' => ['nullable', 'digits:10', 'regex:/^[6-9]\d{9}$/'],
             'room_id' => 'required|exists:rooms,id',
@@ -90,7 +93,10 @@ class PersonController extends Controller
             $q->orderBy('fee_year', 'desc')->orderBy('fee_month', 'desc');
         }]);
 
-        return view('persons.show', compact('person'));
+        $rooms = Room::withCount(['persons' => fn ($q) => $q->where('is_active', true)])
+            ->orderBy('room_number')->get();
+
+        return view('persons.show', compact('person', 'rooms'));
     }
 
     public function edit(Person $person)
@@ -103,12 +109,12 @@ class PersonController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['nullable', 'email', Rule::unique('persons', 'email')->ignore($person->id)],
-            'phone' => ['required', 'digits:10', 'regex:/^[6-9]\d{9}$/', Rule::unique('persons', 'phone')->ignore($person->id)],
+            'email' => ['nullable', 'email', Rule::unique('persons', 'email')->ignore($person->id)->whereNull('deleted_at')],
+            'phone' => ['required', 'digits:10', 'regex:/^[6-9]\d{9}$/', Rule::unique('persons', 'phone')->ignore($person->id)->whereNull('deleted_at')],
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
             'deposit' => 'nullable|numeric|min:0',
-            'aadhar_number' => ['required', 'digits:12', Rule::unique('persons', 'aadhar_number')->ignore($person->id)],
+            'aadhar_number' => ['required', 'digits:12', Rule::unique('persons', 'aadhar_number')->ignore($person->id)->whereNull('deleted_at')],
             'guardian_name' => 'nullable|string|max:255',
             'guardian_phone' => ['nullable', 'digits:10', 'regex:/^[6-9]\d{9}$/'],
             'room_id' => 'required|exists:rooms,id',
@@ -134,8 +140,62 @@ class PersonController extends Controller
 
     public function destroy(Person $person)
     {
+        // Soft delete: the person row and all fee records are preserved.
         $person->delete();
-        return redirect()->route('persons.index')->with('success', 'Person removed successfully!');
+        return redirect()->route('persons.index')
+            ->with('success', $person->name . ' deleted. Fee records are preserved — restore anytime via the "Deleted" filter.');
+    }
+
+    /**
+     * Transfer a person to another room (with capacity check).
+     */
+    public function transfer(Request $request, Person $person)
+    {
+        $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+        ]);
+
+        $newRoom = Room::findOrFail($request->room_id);
+
+        if ((int) $newRoom->id === (int) $person->room_id) {
+            return back()->withErrors(['room_id' => $person->name . ' is already in Room ' . $newRoom->room_number . '.']);
+        }
+
+        $occupancy = $newRoom->persons()->where('is_active', true)->count();
+        if ($occupancy >= $newRoom->capacity) {
+            return back()->withErrors(['room_id' => 'Room ' . $newRoom->room_number . ' is already full!']);
+        }
+
+        $oldRoom = $person->room;
+        $note = 'Transferred from Room ' . ($oldRoom->room_number ?? '?') . ' to Room ' . $newRoom->room_number . ' on ' . now()->format('d M Y') . '.';
+
+        $person->update([
+            'room_id' => $newRoom->id,
+            'notes'   => trim(($person->notes ? $person->notes . "\n" : '') . $note),
+        ]);
+
+        return back()->with('success', $person->name . ' transferred to Room ' . $newRoom->room_number . '!');
+    }
+
+    /**
+     * Restore a soft-deleted person (with capacity check on their room).
+     */
+    public function restore($id)
+    {
+        $person = Person::onlyTrashed()->findOrFail($id);
+        $room = $person->room;
+
+        if ($room && $person->is_active) {
+            $occupancy = $room->persons()->where('is_active', true)->count();
+            if ($occupancy >= $room->capacity) {
+                return back()->withErrors([
+                    'restore' => 'Cannot restore ' . $person->name . ': Room ' . $room->room_number . ' is now full. Free a bed in that room first.',
+                ]);
+            }
+        }
+
+        $person->restore();
+        return back()->with('success', $person->name . ' restored successfully!');
     }
 
     /**
@@ -161,7 +221,9 @@ class PersonController extends Controller
         if ($request->filled('room_id')) {
             $query->where('room_id', $request->room_id);
         }
-        if ($request->filled('status')) {
+        if ($request->status === 'deleted') {
+            $query->onlyTrashed();
+        } elseif ($request->filled('status')) {
             $query->where('is_active', $request->status === 'active');
         }
         if ($request->filled('search')) {

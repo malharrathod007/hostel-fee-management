@@ -20,7 +20,7 @@
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-500">Month</label>
+                <label class="micro-label">Month</label>
                 <select name="month" class="form-select form-select-sm">
                     <option value="">All</option>
                     @for($i = 1; $i <= 12; $i++)
@@ -31,7 +31,7 @@
                 </select>
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-500">Year</label>
+                <label class="micro-label">Year</label>
                 <select name="year" class="form-select form-select-sm">
                     <option value="">All</option>
                     @foreach($years as $y)
@@ -43,7 +43,7 @@
                 </select>
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-500">Status</label>
+                <label class="micro-label">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All</option>
                     <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
@@ -52,7 +52,7 @@
                 </select>
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-500">Person</label>
+                <label class="micro-label">Person</label>
                 <select name="person_id" class="form-select form-select-sm">
                     <option value="">All</option>
                     @foreach($persons as $person)
@@ -83,13 +83,13 @@
         <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Paid</div>
-                <div class="stat-value" style="color:var(--success)">₹{{ number_format($fees->where('status','paid')->sum('amount')) }}</div>
+                <div class="stat-value text-success-c">₹{{ number_format($fees->where('status','paid')->sum('amount')) }}</div>
             </div>
         </div>
         <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Pending</div>
-                <div class="stat-value" style="color:var(--warning)">₹{{ number_format($fees->where('status','pending')->sum('amount')) }}</div>
+                <div class="stat-value text-warning-c">₹{{ number_format($fees->where('status','pending')->sum('amount')) }}</div>
             </div>
         </div>
     </div>
@@ -100,7 +100,6 @@
             <table class="table table-custom">
                 <thead>
                     <tr>
-                        <th>#</th>
                         <th>Person</th>
                         <th>Room</th>
                         <th>Month/Year</th>
@@ -112,34 +111,63 @@
                 </thead>
                 <tbody>
                     @forelse($fees as $index => $fee)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
+                    @php
+                        $initials = collect(explode(' ', trim($fee->person->name)))
+                            ->filter()
+                            ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))
+                            ->take(2)
+                            ->implode('');
+                        $hue = abs(crc32($fee->person->name)) % 360;
+                    @endphp
+                    <tr style="--i: {{ min($index, 15) }}">
+                        <td class="cell-person">
+                            <div class="cell-person-inner">
+                                <span class="avatar" style="--av-h: {{ $hue }}">{{ $initials }}</span>
+                                <a href="{{ route('persons.show', $fee->person) }}" class="person-name">
+                                    {{ $fee->person->name }}
+                                </a>
+                            </div>
+                        </td>
                         <td>
-                            <a href="{{ route('persons.show', $fee->person) }}" class="text-decoration-none fw-500">
-                                {{ $fee->person->name }}
+                            <a href="{{ route('rooms.show', $fee->person->room) }}" class="room-tag">
+                                <i class="bi bi-door-open"></i> {{ $fee->person->room->room_number }}
                             </a>
                         </td>
-                        <td>Room {{ $fee->person->room->room_number }}</td>
                         <td>{{ $fee->month_name }} {{ $fee->fee_year }}</td>
-                        <td class="fw-500">₹{{ number_format($fee->amount) }}</td>
-                        <td><span class="badge badge-{{ $fee->status }}">{{ ucfirst($fee->status) }}</span></td>
+                        <td class="fw-600">₹{{ number_format($fee->amount) }}</td>
+                        <td>
+                            <span class="pill pill-{{ $fee->status }}">
+                                <span class="pill-dot"></span>{{ ucfirst($fee->status) }}
+                            </span>
+                        </td>
                         <td>{{ $fee->paid_date ? $fee->paid_date->format('d M Y') : '-' }}</td>
                         <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ route('fees.edit', $fee) }}" class="btn btn-outline-primary" title="Edit">
+                            <div class="action-row">
+                                <a href="{{ route('fees.edit', $fee) }}" class="icon-btn" title="Edit" aria-label="Edit fee entry">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ route('fees.destroy', $fee) }}" method="POST" class="d-inline"
                                     onsubmit="return confirm('Delete this fee entry?')">
                                     @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                    <button class="icon-btn icon-btn-danger" title="Delete" aria-label="Delete fee entry">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">No fee records found.</td>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="bi bi-cash-stack"></i></div>
+                                <h6>No fee records found</h6>
+                                <p>Try different filters, or add a fee entry.</p>
+                                <a href="{{ route('fees.create') }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-plus-lg me-1"></i> Add Fee
+                                </a>
+                            </div>
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -149,16 +177,18 @@
 
     <!-- Generate Monthly Modal -->
     <div class="modal fade" id="generateModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Generate Monthly Fees</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-ledger">
+                <div class="modal-header ml-head">
+                    <div>
+                        <h5 class="modal-title mb-0"><i class="bi bi-lightning me-2"></i>Generate Monthly Fees</h5>
+                        <small>One pending entry per active person, based on room rent</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ route('fees.generate') }}" method="POST">
                     @csrf
                     <div class="modal-body">
-                        <p class="text-muted small">This will create pending fee entries for all active persons based on their room rent.</p>
                         <div class="row g-3">
                             <div class="col-6">
                                 <label class="form-label fw-500">Month</label>

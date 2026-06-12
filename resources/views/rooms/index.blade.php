@@ -11,28 +11,34 @@
 @section('content')
     <div class="row g-3">
         @forelse($rooms as $room)
+        @php $pct = $room->capacity > 0 ? min(($room->persons_count / $room->capacity) * 100, 100) : 0; @endphp
         <div class="col-md-4 col-sm-6">
-            <div class="card-custom p-3">
+            <div class="card-custom p-3 h-100">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h5 class="mb-0 fw-600">Room {{ $room->room_number }}</h5>
-                        @if($room->floor)
-                            <small class="text-muted">Floor: {{ $room->floor }}</small>
-                        @endif
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="stat-icon tint-violet" style="width:40px;height:40px;font-size:1.1rem;">
+                            <i class="bi bi-door-open-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-600" style="font-size:1rem;">Room {{ $room->room_number }}</h5>
+                            @if($room->floor)
+                                <small class="text-muted">Floor: {{ $room->floor }}</small>
+                            @endif
+                        </div>
                     </div>
                     <!-- Direct action buttons — no dropdown, avoids overflow:hidden clipping -->
-                    <div class="d-flex gap-1">
-                        <a href="{{ route('rooms.show', $room) }}" class="btn btn-sm btn-outline-secondary" title="View">
+                    <div class="action-row">
+                        <a href="{{ route('rooms.show', $room) }}" class="icon-btn" title="View" aria-label="View room {{ $room->room_number }}">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a href="{{ route('rooms.edit', $room) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                        <a href="{{ route('rooms.edit', $room) }}" class="icon-btn" title="Edit" aria-label="Edit room {{ $room->room_number }}">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form action="{{ route('rooms.destroy', $room) }}" method="POST"
                               onsubmit="return confirm('Are you sure you want to delete this room?')"
                               style="display:inline;">
                             @csrf @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger" title="Delete">
+                            <button class="icon-btn icon-btn-danger" title="Delete" aria-label="Delete room {{ $room->room_number }}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -42,16 +48,19 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
                         <small class="text-muted">Occupancy</small>
-                        <small class="fw-500">{{ $room->persons_count }} / {{ $room->capacity }}</small>
+                        <small class="fw-600">{{ $room->persons_count }} / {{ $room->capacity }}</small>
                     </div>
-                    <div class="progress" style="height:6px;">
-                        @php $pct = $room->capacity > 0 ? ($room->persons_count / $room->capacity) * 100 : 0; @endphp
-                        <div class="progress-bar {{ $pct >= 100 ? 'bg-warning' : 'bg-primary' }}" style="width:{{ $pct }}%"></div>
+                    <div class="occupancy-bar {{ $pct >= 100 ? 'is-full' : '' }}">
+                        <span style="width:{{ $pct }}%"></span>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-600 text-primary" style="font-size:0.85rem;">S: ₹{{ number_format($room->student_rent) }} / E: ₹{{ number_format($room->employee_rent) }}</span>
+                    <div style="font-size:0.78rem;">
+                        <span class="text-muted">Student</span> <span class="fw-600 text-primary-c">₹{{ number_format($room->student_rent) }}</span>
+                        <span class="text-muted mx-1">·</span>
+                        <span class="text-muted">Employee</span> <span class="fw-600 text-primary-c">₹{{ number_format($room->employee_rent) }}</span>
+                    </div>
                     <a href="{{ route('persons.create', ['room_id' => $room->id]) }}"
                        class="btn btn-sm btn-outline-success {{ $room->persons_count >= $room->capacity ? 'disabled' : '' }}">
                         <i class="bi bi-person-plus"></i> Add
@@ -61,13 +70,15 @@
         </div>
         @empty
         <div class="col-12">
-            <div class="card-custom p-5 text-center">
-                <i class="bi bi-door-open text-muted" style="font-size:3rem;"></i>
-                <h5 class="mt-3">No Rooms Yet</h5>
-                <p class="text-muted">Start by adding your first room.</p>
-                <a href="{{ route('rooms.create') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i> Add Room
-                </a>
+            <div class="card-custom">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="bi bi-door-open"></i></div>
+                    <h6>No Rooms Yet</h6>
+                    <p>Start by adding your first room.</p>
+                    <a href="{{ route('rooms.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Add Room
+                    </a>
+                </div>
             </div>
         </div>
         @endforelse

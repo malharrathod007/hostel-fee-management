@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::get('persons/import/template', [PersonController::class, 'downloadTemplate'])->name('persons.import.template');
     Route::post('persons/import', [PersonController::class, 'import'])->name('persons.import');
     Route::get('persons/export', [PersonController::class, 'export'])->name('persons.export');
+    Route::post('persons/{person}/transfer', [PersonController::class, 'transfer'])->name('persons.transfer');
+    Route::post('persons/{id}/restore', [PersonController::class, 'restore'])->name('persons.restore');
     Route::resource('persons', PersonController::class);
 
     // Fees

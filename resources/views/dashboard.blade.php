@@ -3,12 +3,24 @@
 @section('page_title', 'Dashboard')
 
 @section('content')
+    <!-- Greeting hero -->
+    <div class="hero-strip mb-4">
+        <div>
+            <h4>Hello, {{ Auth::user()->name }} 👋</h4>
+            <p>{{ now()->format('l, d F Y') }} — here's how your hostel is doing.</p>
+        </div>
+        <div class="hero-actions no-print">
+            <a href="{{ route('fees.create') }}" class="btn-hero"><i class="bi bi-cash"></i> Add Fee</a>
+            <a href="{{ route('persons.create') }}" class="btn-hero"><i class="bi bi-person-plus"></i> Add Person</a>
+        </div>
+    </div>
+
     <!-- Stats Cards — 2×2 on mobile, 4 across on desktop -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="stat-card">
+            <a href="{{ route('rooms.index') }}" class="stat-card">
                 <div class="d-flex align-items-center gap-2 gap-md-3">
-                    <div class="stat-icon" style="background:#ede9fe;color:#7c3aed;">
+                    <div class="stat-icon tint-violet">
                         <i class="bi bi-door-open-fill"></i>
                     </div>
                     <div>
@@ -16,12 +28,12 @@
                         <div class="stat-label">Total Rooms</div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card">
+            <a href="{{ route('persons.index') }}" class="stat-card">
                 <div class="d-flex align-items-center gap-2 gap-md-3">
-                    <div class="stat-icon" style="background:#dbeafe;color:#2563eb;">
+                    <div class="stat-icon tint-blue">
                         <i class="bi bi-people-fill"></i>
                     </div>
                     <div>
@@ -29,12 +41,12 @@
                         <div class="stat-label">Active Persons</div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card">
+            <a href="{{ route('fees.index') }}" class="stat-card">
                 <div class="d-flex align-items-center gap-2 gap-md-3">
-                    <div class="stat-icon" style="background:#d1fae5;color:#059669;">
+                    <div class="stat-icon tint-green">
                         <i class="bi bi-cash-stack"></i>
                     </div>
                     <div>
@@ -42,12 +54,12 @@
                         <div class="stat-label">Collected (Month)</div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card">
+            <a href="{{ route('fees.index', ['status' => 'pending']) }}" class="stat-card">
                 <div class="d-flex align-items-center gap-2 gap-md-3">
-                    <div class="stat-icon" style="background:#fef3c7;color:#d97706;">
+                    <div class="stat-icon tint-amber">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                     </div>
                     <div>
@@ -55,7 +67,7 @@
                         <div class="stat-label">Pending (Year)</div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -79,26 +91,33 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($rooms as $room)
-                            <tr>
+                            @forelse($rooms as $index => $room)
+                            <tr style="--i: {{ min($index, 15) }}">
                                 <td>
-                                    <a href="{{ route('rooms.show', $room) }}" class="text-decoration-none fw-500">
-                                        Room {{ $room->room_number }}
+                                    <a href="{{ route('rooms.show', $room) }}" class="room-tag">
+                                        <i class="bi bi-door-open"></i> {{ $room->room_number }}
                                     </a>
                                 </td>
                                 <td>{{ $room->persons_count }} / {{ $room->capacity }}</td>
                                 <td>
                                     @if($room->persons_count >= $room->capacity)
-                                        <span class="badge badge-pending">Full</span>
+                                        <span class="pill pill-full"><span class="pill-dot"></span>Full</span>
                                     @else
-                                        <span class="badge badge-paid">Available</span>
+                                        <span class="pill pill-available"><span class="pill-dot"></span>Available</span>
                                     @endif
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-4">
-                                    No rooms added yet. <a href="{{ route('rooms.create') }}">Add your first room</a>
+                                <td colspan="3">
+                                    <div class="empty-state">
+                                        <div class="empty-icon"><i class="bi bi-door-open"></i></div>
+                                        <h6>No rooms added yet</h6>
+                                        <p>Rooms you create will appear here.</p>
+                                        <a href="{{ route('rooms.create') }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-lg me-1"></i> Add your first room
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             @endforelse
@@ -129,22 +148,29 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($recentFees as $fee)
-                            <tr>
-                                <td>{{ $fee->person->name }}</td>
+                            @forelse($recentFees as $index => $fee)
+                            <tr style="--i: {{ min($index, 15) }}">
+                                <td class="fw-500">{{ $fee->person->name }}</td>
                                 <td>{{ $fee->person->room->room_number }}</td>
                                 <td>{{ $fee->month_name }} {{ $fee->fee_year }}</td>
-                                <td>₹{{ number_format($fee->amount) }}</td>
+                                <td class="fw-600">₹{{ number_format($fee->amount) }}</td>
                                 <td>
-                                    <span class="badge badge-{{ $fee->status }}">
-                                        {{ ucfirst($fee->status) }}
+                                    <span class="pill pill-{{ $fee->status }}">
+                                        <span class="pill-dot"></span>{{ ucfirst($fee->status) }}
                                     </span>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    No fee records yet. <a href="{{ route('fees.create') }}">Create first entry</a>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <div class="empty-icon"><i class="bi bi-cash-stack"></i></div>
+                                        <h6>No fee records yet</h6>
+                                        <p>Fee entries you add will show up here.</p>
+                                        <a href="{{ route('fees.create') }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-lg me-1"></i> Create first entry
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             @endforelse

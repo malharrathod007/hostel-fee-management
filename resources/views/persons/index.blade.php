@@ -23,13 +23,13 @@
     @if(session('import_results'))
         @php $res = session('import_results'); @endphp
         @if(count($res['skipped']) > 0)
-        <div class="card-custom p-3 mb-4" style="border-left:4px solid var(--warning);">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <i class="bi bi-exclamation-triangle-fill" style="color:var(--warning);"></i>
-                <strong style="font-size:0.9rem;">{{ count($res['skipped']) }} row(s) were skipped</strong>
+        <div class="banner banner-warn mb-4">
+            <div class="banner-title">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                {{ count($res['skipped']) }} row(s) were skipped
             </div>
-            <div style="max-height:180px;overflow-y:auto;">
-                <table class="table table-sm mb-0" style="font-size:0.8rem;">
+            <div class="banner-scroll">
+                <table class="table table-sm mb-0">
                     <thead><tr><th>Row</th><th>Name</th><th>Reason</th></tr></thead>
                     <tbody>
                         @foreach($res['skipped'] as $s)
@@ -50,12 +50,15 @@
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-12 col-md-3">
-                <label class="form-label small fw-500">Search</label>
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Name, phone, Aadhar..."
-                    value="{{ request('search') }}">
+                <label class="micro-label">Search</label>
+                <div class="input-icon">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Name, phone, Aadhar..."
+                        value="{{ request('search') }}">
+                </div>
             </div>
             <div class="col-6 col-md-3">
-                <label class="form-label small fw-500">Room</label>
+                <label class="micro-label">Room</label>
                 <select name="room_id" class="form-select form-select-sm">
                     <option value="">All Rooms</option>
                     @foreach($rooms as $room)
@@ -66,11 +69,12 @@
                 </select>
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label small fw-500">Status</label>
+                <label class="micro-label">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
                 </select>
             </div>
             <div class="col-6 col-md-2">
@@ -82,62 +86,138 @@
         </form>
     </div>
 
+    {{-- ── Toolbar: result count + quick status chips ──────────────────── --}}
+    @php
+        $chipBase    = array_filter(request()->only(['search', 'room_id']));
+        $activeCount = $persons->where('is_active', true)->count();
+    @endphp
+    <div class="page-toolbar no-print">
+        <div class="result-count">
+            <strong>{{ $persons->count() }}</strong>
+            {{ $persons->count() === 1 ? 'person' : 'persons' }}
+            @if($persons->count() > 0 && !request()->filled('status'))
+                &middot; {{ $activeCount }} active
+                &middot; {{ $persons->count() - $activeCount }} inactive
+            @endif
+        </div>
+        <div class="chip-row">
+            <a href="{{ route('persons.index', $chipBase) }}"
+               class="chip {{ !request()->filled('status') ? 'active' : '' }}">All</a>
+            <a href="{{ route('persons.index', array_merge($chipBase, ['status' => 'active'])) }}"
+               class="chip {{ request('status') === 'active' ? 'active' : '' }}">Active</a>
+            <a href="{{ route('persons.index', array_merge($chipBase, ['status' => 'inactive'])) }}"
+               class="chip {{ request('status') === 'inactive' ? 'active' : '' }}">Inactive</a>
+            <a href="{{ route('persons.index', array_merge($chipBase, ['status' => 'deleted'])) }}"
+               class="chip {{ request('status') === 'deleted' ? 'active' : '' }}"><i class="bi bi-trash" style="font-size:0.7rem;"></i> Deleted</a>
+        </div>
+    </div>
+
     {{-- ── Persons Table ───────────────────────────────────────────────── --}}
     <div class="card-custom">
         <div class="table-responsive">
             <table class="table table-custom">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Name</th>
+                        <th>Person</th>
                         <th>Room</th>
-                        <th>Phone</th>
-                        <th>Join Date</th>
+                        <th>Joined</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($persons as $index => $person)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>
-                            <a href="{{ route('persons.show', $person) }}" class="text-decoration-none fw-500">
-                                {{ $person->name }}
-                            </a>
+                    @php
+                        $initials = collect(explode(' ', trim($person->name)))
+                            ->filter()
+                            ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))
+                            ->take(2)
+                            ->implode('');
+                        $hue  = abs(crc32($person->name)) % 360;
+                        $type = ucfirst($person->person_type ?? 'student');
+                    @endphp
+                    <tr style="--i: {{ min($index, 15) }}">
+                        <td class="cell-person">
+                            <div class="cell-person-inner">
+                                <span class="avatar" style="--av-h: {{ $hue }}">{{ $initials }}</span>
+                                <div>
+                                    @if($person->trashed())
+                                        <span class="person-name">{{ $person->name }}</span>
+                                    @else
+                                        <a href="{{ route('persons.show', $person) }}" class="person-name">
+                                            {{ $person->name }}
+                                        </a>
+                                    @endif
+                                    <div class="person-meta">
+                                        {{ $person->phone ?? 'No phone' }} &middot; {{ $type }}
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                         <td>
-                            <a href="{{ route('rooms.show', $person->room) }}" class="text-decoration-none">
-                                Room {{ $person->room->room_number }}
+                            <a href="{{ route('rooms.show', $person->room) }}" class="room-tag">
+                                <i class="bi bi-door-open"></i> {{ $person->room->room_number }}
                             </a>
                         </td>
-                        <td>{{ $person->phone ?? '-' }}</td>
                         <td>{{ $person->join_date->format('d M Y') }}</td>
                         <td>
-                            @if($person->is_active)
-                                <span class="badge badge-paid">Active</span>
+                            @if($person->trashed())
+                                <span class="pill pill-inactive"><span class="pill-dot"></span>Deleted {{ $person->deleted_at->format('d M Y') }}</span>
+                            @elseif($person->is_active)
+                                <span class="pill pill-active"><span class="pill-dot"></span>Active</span>
                             @else
-                                <span class="badge badge-pending">Inactive</span>
+                                <span class="pill pill-inactive"><span class="pill-dot"></span>Inactive</span>
                             @endif
                         </td>
                         <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ route('persons.show', $person) }}" class="btn btn-outline-primary" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="{{ route('persons.edit', $person) }}" class="btn btn-outline-secondary" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="{{ route('fees.create', ['person_id' => $person->id]) }}" class="btn btn-outline-success" title="Add Fee">
-                                    <i class="bi bi-cash"></i>
-                                </a>
-                            </div>
+                            @if($person->trashed())
+                                <form action="{{ route('persons.restore', $person->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i> Restore
+                                    </button>
+                                </form>
+                            @else
+                                <div class="action-row">
+                                    <a href="{{ route('persons.show', $person) }}" class="icon-btn" title="View" aria-label="View {{ $person->name }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('persons.edit', $person) }}" class="icon-btn" title="Edit" aria-label="Edit {{ $person->name }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ route('fees.create', ['person_id' => $person->id]) }}" class="icon-btn icon-btn-success" title="Add Fee" aria-label="Add fee for {{ $person->name }}">
+                                        <i class="bi bi-cash"></i>
+                                    </a>
+                                    <button type="button" class="icon-btn transfer-btn" title="Transfer Room"
+                                            aria-label="Transfer {{ $person->name }} to another room"
+                                            data-bs-toggle="modal" data-bs-target="#transferModal"
+                                            data-action="{{ route('persons.transfer', $person) }}"
+                                            data-name="{{ $person->name }}"
+                                            data-room="{{ $person->room->room_number }}">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </button>
+                                    <form action="{{ route('persons.destroy', $person) }}" method="POST" class="d-inline"
+                                          onsubmit="return confirm('Delete {{ $person->name }}?\n\nTheir fee records and reports will be KEPT, and you can restore them anytime from the \'Deleted\' filter.')">
+                                        @csrf @method('DELETE')
+                                        <button class="icon-btn icon-btn-danger" title="Delete" aria-label="Delete {{ $person->name }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            No persons found. <a href="{{ route('persons.create') }}">Add your first person</a>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="bi bi-people"></i></div>
+                                <h6>No persons found</h6>
+                                <p>Try adjusting your filters, or add someone new to get started.</p>
+                                <a href="{{ route('persons.create') }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-person-plus me-1"></i> Add Person
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     @endforelse
@@ -151,15 +231,15 @@
          ══════════════════════════════════════════════════════════════════ --}}
     <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;">
+            <div class="modal-content modal-ledger">
 
                 {{-- Header --}}
-                <div class="modal-header" style="background:linear-gradient(135deg,#1e1b4b,#312e81);border:none;padding:1.25rem 1.5rem;">
+                <div class="modal-header ml-head">
                     <div>
-                        <h5 class="modal-title mb-0" id="importModalLabel" style="color:#fff;font-size:1rem;">
+                        <h5 class="modal-title mb-0" id="importModalLabel">
                             <i class="bi bi-file-earmark-spreadsheet me-2"></i>Import Persons from CSV
                         </h5>
-                        <small style="color:#c7d2fe;font-size:0.78rem;">Upload a CSV file to create or update persons in bulk</small>
+                        <small>Upload a CSV file to create or update persons in bulk</small>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -168,19 +248,19 @@
                 <div class="modal-body p-0">
 
                     {{-- Step guide --}}
-                    <div style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:1rem 1.5rem;">
+                    <div class="ml-steps">
                         <div class="row g-2 text-center">
                             <div class="col-4">
                                 <div class="step-badge">1</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;">Download template</div>
+                                <div class="step-caption">Download template</div>
                             </div>
                             <div class="col-4">
                                 <div class="step-badge">2</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;">Fill in Excel, save as CSV</div>
+                                <div class="step-caption">Fill in Excel, save as CSV</div>
                             </div>
                             <div class="col-4">
                                 <div class="step-badge">3</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;">Upload &amp; import</div>
+                                <div class="step-caption">Upload &amp; import</div>
                             </div>
                         </div>
                     </div>
@@ -188,20 +268,18 @@
                     <div class="p-4">
 
                         {{-- Template download --}}
-                        <div class="d-flex align-items-center gap-3 p-3 mb-4"
-                             style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;">
-                            <div style="width:42px;height:42px;background:#dbeafe;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="bi bi-file-earmark-arrow-down" style="color:#2563eb;font-size:1.2rem;"></i>
+                        <div class="tile-info mb-4">
+                            <div class="tile-icon">
+                                <i class="bi bi-file-earmark-arrow-down"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div style="font-weight:600;font-size:0.875rem;color:var(--text);">Download CSV Template</div>
-                                <div style="font-size:0.78rem;color:var(--text-muted);">
+                                <div class="tile-title">Download CSV Template</div>
+                                <div class="tile-text">
                                     Open in Excel → fill data → <strong>File → Save As → CSV</strong>
                                 </div>
                             </div>
                             <a href="{{ route('persons.import.template') }}"
-                               class="btn btn-sm btn-outline-primary flex-shrink-0"
-                               style="white-space:nowrap;">
+                               class="btn btn-sm btn-outline-primary flex-shrink-0 text-nowrap">
                                 <i class="bi bi-download me-1"></i> Template
                             </a>
                         </div>
@@ -211,41 +289,34 @@
                             @csrf
 
                             {{-- Drop zone --}}
-                            <div id="dropZone"
-                                 style="border:2px dashed #cbd5e1;border-radius:12px;padding:2rem 1rem;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;margin-bottom:1rem;position:relative;">
+                            <div id="dropZone" class="drop-zone mb-3">
                                 <input type="file" name="csv_file" id="csvFileInput"
-                                       accept=".csv,text/csv"
-                                       style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+                                       accept=".csv,text/csv" class="drop-input">
                                 <div id="dropZoneContent">
-                                    <i class="bi bi-cloud-arrow-up" style="font-size:2.5rem;color:#94a3b8;"></i>
-                                    <div style="font-weight:600;color:var(--text);margin-top:0.5rem;font-size:0.9rem;">
-                                        Drop your CSV file here
-                                    </div>
-                                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.25rem;">
-                                        or click to browse &nbsp;·&nbsp; CSV only, max 2 MB
-                                    </div>
+                                    <i class="bi bi-cloud-arrow-up drop-icon"></i>
+                                    <div class="drop-title">Drop your CSV file here</div>
+                                    <div class="drop-hint">or click to browse &nbsp;·&nbsp; CSV only, max 2 MB</div>
                                 </div>
                                 <div id="dropZoneSelected" style="display:none;">
-                                    <i class="bi bi-file-earmark-check" style="font-size:2rem;color:var(--success);"></i>
-                                    <div style="font-weight:600;color:var(--success);margin-top:0.4rem;font-size:0.9rem;" id="selectedFileName">—</div>
-                                    <div style="font-size:0.75rem;color:var(--text-muted);" id="selectedFileSize">—</div>
-                                    <button type="button" id="clearFile"
-                                            style="margin-top:0.5rem;background:none;border:1px solid #e2e8f0;border-radius:6px;padding:0.2rem 0.6rem;font-size:0.75rem;color:var(--text-muted);cursor:pointer;">
+                                    <i class="bi bi-file-earmark-check drop-ok-icon"></i>
+                                    <div class="drop-ok-name" id="selectedFileName">—</div>
+                                    <div class="drop-ok-size" id="selectedFileSize">—</div>
+                                    <button type="button" id="clearFile" class="drop-clear-btn">
                                         <i class="bi bi-x me-1"></i>Change file
                                     </button>
                                 </div>
                             </div>
 
                             {{-- Column reference --}}
-                            <details style="margin-bottom:1rem;">
-                                <summary style="font-size:0.8rem;font-weight:600;color:var(--primary);cursor:pointer;user-select:none;padding:0.4rem 0;">
+                            <details class="ml-ref mb-3">
+                                <summary>
                                     <i class="bi bi-info-circle me-1"></i>Column reference &amp; matching rules
                                 </summary>
-                                <div style="margin-top:0.75rem;background:#f8fafc;border-radius:10px;padding:0.875rem;font-size:0.78rem;">
+                                <div class="ml-ref-body">
                                     <div class="row g-2">
                                         <div class="col-12 col-md-6">
-                                            <strong style="color:var(--danger);">Required columns</strong>
-                                            <ul style="margin:0.35rem 0 0;padding-left:1.2rem;line-height:2;">
+                                            <strong class="text-danger">Required columns</strong>
+                                            <ul>
                                                 <li><code>Name</code> — full name</li>
                                                 <li><code>Phone</code> — 10-digit Indian mobile</li>
                                                 <li><code>Aadhar Number</code> — 12 digits <em>(used to match existing)</em></li>
@@ -253,8 +324,8 @@
                                             </ul>
                                         </div>
                                         <div class="col-12 col-md-6">
-                                            <strong style="color:var(--text-muted);">Optional columns</strong>
-                                            <ul style="margin:0.35rem 0 0;padding-left:1.2rem;line-height:2;">
+                                            <strong class="text-muted">Optional columns</strong>
+                                            <ul>
                                                 <li><code>Type</code> — <em>student</em> or <em>employee</em></li>
                                                 <li><code>Email</code>, <code>City</code>, <code>Address</code></li>
                                                 <li><code>Guardian Name</code>, <code>Guardian Phone</code></li>
@@ -265,7 +336,7 @@
                                             </ul>
                                         </div>
                                     </div>
-                                    <div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:#eff6ff;border-radius:8px;border-left:3px solid #3b82f6;">
+                                    <div class="ml-ref-note">
                                         <strong>How matching works:</strong> If a row's <code>Aadhar Number</code> matches an existing person, that person is <strong>updated</strong>. Otherwise a new person is <strong>created</strong>.
                                     </div>
                                 </div>
@@ -285,28 +356,51 @@
         </div>
     </div>
 
+    {{-- ══════════════════════════════════════════════════════════════════
+         Transfer Room Modal (shared — action set per person via JS)
+         ══════════════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-ledger">
+                <div class="modal-header ml-head">
+                    <div>
+                        <h5 class="modal-title mb-0" id="transferModalLabel">
+                            <i class="bi bi-arrow-left-right me-2"></i>Transfer Room
+                        </h5>
+                        <small>Move <strong id="transferPersonName">this person</strong> from Room <span id="transferCurrentRoom">—</span> to another room</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" id="transferForm" action="">
+                    @csrf
+                    <div class="modal-body">
+                        <label class="form-label fw-500">New Room <span class="text-danger">*</span></label>
+                        <select name="room_id" class="form-select" required>
+                            <option value="">Select Room</option>
+                            @foreach($rooms as $room)
+                                <option value="{{ $room->id }}" {{ $room->persons_count >= $room->capacity ? 'disabled' : '' }}>
+                                    Room {{ $room->room_number }} — {{ $room->persons_count }}/{{ $room->capacity }} occupied{{ $room->persons_count >= $room->capacity ? ' (Full)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle me-1"></i>The transfer is recorded in the person's notes. Full rooms are disabled.
+                        </small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-arrow-left-right me-1"></i> Transfer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @section('scripts')
-<style>
-    .step-badge {
-        width: 32px; height: 32px;
-        background: var(--primary);
-        color: #fff;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 0.85rem;
-        margin: 0 auto;
-    }
-    #dropZone.drag-over {
-        border-color: var(--primary);
-        background: #eff6ff;
-    }
-    #dropZone:hover {
-        border-color: var(--primary-light);
-        background: #fafbff;
-    }
-</style>
 <script>
 (function () {
     const input      = document.getElementById('csvFileInput');
@@ -381,6 +475,23 @@
         var importModal = new bootstrap.Modal(document.getElementById('importModal'));
         importModal.show();
     @endif
+})();
+
+/* ── Transfer modal: point the shared form at the clicked person ── */
+(function () {
+    const form        = document.getElementById('transferForm');
+    const nameEl      = document.getElementById('transferPersonName');
+    const roomEl      = document.getElementById('transferCurrentRoom');
+    if (!form) return;
+
+    document.querySelectorAll('.transfer-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            form.action = btn.dataset.action;
+            nameEl.textContent = btn.dataset.name;
+            roomEl.textContent = btn.dataset.room;
+            form.querySelector('select[name="room_id"]').value = '';
+        });
+    });
 })();
 </script>
 @endsection
