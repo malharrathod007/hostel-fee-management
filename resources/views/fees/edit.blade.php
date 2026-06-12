@@ -5,7 +5,11 @@
 @section('content')
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <div class="card-custom p-4">
+            <div class="card-custom">
+                <div class="card-header">
+                    <i class="bi bi-cash me-2"></i>Fee Details
+                </div>
+                <div class="p-3 p-md-4">
                 <form action="{{ isset($fee) ? route('fees.update', $fee) : route('fees.store') }}" method="POST">
                     @csrf
                     @if(isset($fee)) @method('PUT') @endif
@@ -82,18 +86,19 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label fw-500">Notes</label>
                         <textarea name="notes" class="form-control" rows="2">{{ old('notes', $fee->notes ?? '') }}</textarea>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary flex-grow-1 flex-md-grow-0">
                             <i class="bi bi-check-lg me-1"></i> {{ isset($fee) ? 'Update' : 'Save Fee' }}
                         </button>
                         <a href="{{ route('fees.index') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>

@@ -6,8 +6,11 @@
     @if(!isset($fee) && isset($rooms))
     <div class="row justify-content-center mb-4">
         <div class="col-lg-6">
-            <div class="card-custom p-4 border-primary">
-                <h6 class="fw-600 mb-3 text-primary"><i class="bi bi-building me-1"></i> Bulk: Generate Fees for All Persons in a Room</h6>
+            <div class="card-custom" style="border-color:#c7d2fe;">
+                <div class="card-header" style="background:var(--primary-tint);border-color:#c7d2fe;">
+                    <i class="bi bi-building me-2"></i>Bulk: Generate Fees for a Whole Room
+                </div>
+                <div class="p-3 p-md-4">
                 <form action="{{ route('fees.store_for_room') }}" method="POST">
                     @csrf
                     <div class="mb-3">
@@ -45,11 +48,12 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary w-100 w-md-auto">
                         <i class="bi bi-collection me-1"></i> Generate Fees for Room
                     </button>
                     <small class="d-block text-muted mt-2">Creates one fee per active person in the room, using the rate matching their type (student/employee).</small>
                 </form>
+                </div>
             </div>
         </div>
     </div>
@@ -57,7 +61,11 @@
 
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <div class="card-custom p-4">
+            <div class="card-custom">
+                <div class="card-header">
+                    <i class="bi bi-cash me-2"></i>{{ isset($fee) ? 'Fee Details' : 'Single Fee Entry' }}
+                </div>
+                <div class="p-3 p-md-4">
                 <form action="{{ isset($fee) ? route('fees.update', $fee) : route('fees.store') }}" method="POST">
                     @csrf
                     @if(isset($fee)) @method('PUT') @endif
@@ -155,18 +163,19 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label fw-500">Notes</label>
                         <textarea name="notes" class="form-control" rows="2">{{ old('notes', $fee->notes ?? '') }}</textarea>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary flex-grow-1 flex-md-grow-0">
                             <i class="bi bi-check-lg me-1"></i> {{ isset($fee) ? 'Update' : 'Save Fee' }}
                         </button>
                         <a href="{{ route('fees.index') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>

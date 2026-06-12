@@ -13,7 +13,7 @@
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-6 col-md-3">
-                <label class="form-label small fw-500">Quarter</label>
+                <label class="micro-label">Quarter</label>
                 <select name="quarter" class="form-select form-select-sm">
                     <option value="1" {{ $quarter == 1 ? 'selected' : '' }}>Q1 (Jan-Mar)</option>
                     <option value="2" {{ $quarter == 2 ? 'selected' : '' }}>Q2 (Apr-Jun)</option>
@@ -22,7 +22,7 @@
                 </select>
             </div>
             <div class="col-6 col-md-3">
-                <label class="form-label small fw-500">Year</label>
+                <label class="micro-label">Year</label>
                 <select name="year" class="form-select form-select-sm">
                     @foreach($years as $y)
                         <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
@@ -46,13 +46,13 @@
         <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Collected</div>
-                <div class="stat-value" style="color:var(--success)">₹{{ number_format($totalPaid) }}</div>
+                <div class="stat-value text-success-c">₹{{ number_format($totalPaid) }}</div>
             </div>
         </div>
         <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Pending</div>
-                <div class="stat-value" style="color:var(--warning)">₹{{ number_format($totalPending) }}</div>
+                <div class="stat-value text-warning-c">₹{{ number_format($totalPending) }}</div>
             </div>
         </div>
     </div>
@@ -76,17 +76,23 @@
                 </thead>
                 <tbody>
                     @forelse($personSummary as $index => $data)
-                    <tr>
+                    <tr style="--i: {{ min($loop->index, 15) }}">
                         <td>{{ $loop->iteration }}</td>
                         <td class="fw-500">{{ $data['person']->name }}</td>
                         <td>Room {{ $data['person']->room->room_number }}</td>
-                        <td>₹{{ number_format($data['total']) }}</td>
-                        <td style="color:var(--success)">₹{{ number_format($data['paid']) }}</td>
-                        <td style="color:var(--warning)">₹{{ number_format($data['pending']) }}</td>
+                        <td class="fw-600">₹{{ number_format($data['total']) }}</td>
+                        <td class="text-success-c">₹{{ number_format($data['paid']) }}</td>
+                        <td class="text-warning-c">₹{{ number_format($data['pending']) }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">No data for this quarter.</td>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="bi bi-calendar3"></i></div>
+                                <h6>No data for this quarter</h6>
+                                <p>Pick a different quarter or year above.</p>
+                            </div>
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -95,8 +101,8 @@
                     <tr class="fw-600">
                         <td colspan="3" class="text-end">Total:</td>
                         <td>₹{{ number_format($totalAmount) }}</td>
-                        <td style="color:var(--success)">₹{{ number_format($totalPaid) }}</td>
-                        <td style="color:var(--warning)">₹{{ number_format($totalPending) }}</td>
+                        <td class="text-success-c">₹{{ number_format($totalPaid) }}</td>
+                        <td class="text-warning-c">₹{{ number_format($totalPending) }}</td>
                     </tr>
                 </tfoot>
                 @endif
@@ -122,11 +128,15 @@
                 </thead>
                 <tbody>
                     @foreach($fees as $fee)
-                    <tr>
-                        <td>{{ $fee->person->name }}</td>
+                    <tr style="--i: {{ min($loop->index, 15) }}">
+                        <td class="fw-500">{{ $fee->person->name }}</td>
                         <td>{{ $fee->month_name }}</td>
-                        <td>₹{{ number_format($fee->amount) }}</td>
-                        <td><span class="badge badge-{{ $fee->status }}">{{ ucfirst($fee->status) }}</span></td>
+                        <td class="fw-600">₹{{ number_format($fee->amount) }}</td>
+                        <td>
+                            <span class="pill pill-{{ $fee->status }}">
+                                <span class="pill-dot"></span>{{ ucfirst($fee->status) }}
+                            </span>
+                        </td>
                         <td>{{ $fee->paid_date ? $fee->paid_date->format('d M Y') : '-' }}</td>
                     </tr>
                     @endforeach

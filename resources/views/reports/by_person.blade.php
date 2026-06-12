@@ -13,7 +13,7 @@
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-12 col-md-4">
-                <label class="form-label small fw-500">Select Person</label>
+                <label class="micro-label">Select Person</label>
                 <select name="person_id" class="form-select form-select-sm" required>
                     <option value="">Choose a person...</option>
                     @foreach($persons as $person)
@@ -24,7 +24,7 @@
                 </select>
             </div>
             <div class="col-6 col-md-3">
-                <label class="form-label small fw-500">Year</label>
+                <label class="micro-label">Year</label>
                 <select name="year" class="form-select form-select-sm">
                     @foreach($years as $y)
                         <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
@@ -38,36 +38,46 @@
     </div>
 
     @if($selectedPerson)
+        @php
+            $initials = collect(explode(' ', trim($selectedPerson->name)))
+                ->filter()
+                ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))
+                ->take(2)
+                ->implode('');
+            $hue = abs(crc32($selectedPerson->name)) % 360;
+        @endphp
+
         <!-- Person Info -->
-        <div class="card-custom p-4 mb-4">
-            <div class="row">
+        <div class="card-custom p-3 p-md-4 mb-4">
+            <div class="row g-3 align-items-center">
                 <div class="col-md-6">
-                    <h6 class="fw-600 text-primary mb-2">{{ $selectedPerson->name }}</h6>
-                    <table class="table table-borderless table-sm mb-0">
-                        <tr><td class="text-muted" style="width:100px;">Room</td><td>Room {{ $selectedPerson->room->room_number }}</td></tr>
-                        <tr><td class="text-muted">Phone</td><td>{{ $selectedPerson->phone ?? '-' }}</td></tr>
-                        <tr><td class="text-muted">Join Date</td><td>{{ $selectedPerson->join_date->format('d M Y') }}</td></tr>
-                    </table>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="avatar avatar-lg" style="--av-h: {{ $hue }}">{{ $initials }}</span>
+                        <div>
+                            <h6 class="fw-600 mb-1">{{ $selectedPerson->name }}</h6>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <a href="{{ route('rooms.show', $selectedPerson->room) }}" class="room-tag">
+                                    <i class="bi bi-door-open"></i> {{ $selectedPerson->room->room_number }}
+                                </a>
+                                <span class="text-muted" style="font-size:0.78rem;">{{ $selectedPerson->phone ?? 'No phone' }}</span>
+                                <span class="text-muted" style="font-size:0.78rem;">Joined {{ $selectedPerson->join_date->format('d M Y') }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <div class="row g-3">
-                        <div class="col-4">
-                            <div class="text-center">
-                                <div class="stat-label">Total</div>
-                                <div class="fw-700 fs-5">₹{{ number_format($totalAmount) }}</div>
-                            </div>
+                        <div class="col-4 text-center">
+                            <div class="stat-label">Total</div>
+                            <div class="fw-700 fs-5">₹{{ number_format($totalAmount) }}</div>
                         </div>
-                        <div class="col-4">
-                            <div class="text-center">
-                                <div class="stat-label">Paid</div>
-                                <div class="fw-700 fs-5" style="color:var(--success)">₹{{ number_format($totalPaid) }}</div>
-                            </div>
+                        <div class="col-4 text-center">
+                            <div class="stat-label">Paid</div>
+                            <div class="fw-700 fs-5 text-success-c">₹{{ number_format($totalPaid) }}</div>
                         </div>
-                        <div class="col-4">
-                            <div class="text-center">
-                                <div class="stat-label">Pending</div>
-                                <div class="fw-700 fs-5" style="color:var(--warning)">₹{{ number_format($totalPending) }}</div>
-                            </div>
+                        <div class="col-4 text-center">
+                            <div class="stat-label">Pending</div>
+                            <div class="fw-700 fs-5 text-warning-c">₹{{ number_format($totalPending) }}</div>
                         </div>
                     </div>
                 </div>
@@ -93,17 +103,27 @@
                     </thead>
                     <tbody>
                         @forelse($fees as $fee)
-                        <tr>
+                        <tr style="--i: {{ min($loop->index, 15) }}">
                             <td class="fw-500">{{ $fee->month_name }}</td>
-                            <td>₹{{ number_format($fee->amount) }}</td>
-                            <td><span class="badge badge-{{ $fee->status }}">{{ ucfirst($fee->status) }}</span></td>
+                            <td class="fw-600">₹{{ number_format($fee->amount) }}</td>
+                            <td>
+                                <span class="pill pill-{{ $fee->status }}">
+                                    <span class="pill-dot"></span>{{ ucfirst($fee->status) }}
+                                </span>
+                            </td>
                             <td>{{ $fee->paid_date ? $fee->paid_date->format('d M Y') : '-' }}</td>
                             <td>{{ $fee->payment_mode ? ucfirst($fee->payment_mode) : '-' }}</td>
                             <td>{{ $fee->receipt_number ?? '-' }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No fee records for {{ $year }}.</td>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-icon"><i class="bi bi-calendar"></i></div>
+                                    <h6>No fee records for {{ $year }}</h6>
+                                    <p>Try a different year above.</p>
+                                </div>
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -120,10 +140,12 @@
             </div>
         </div>
     @else
-        <div class="card-custom p-5 text-center">
-            <i class="bi bi-person-badge text-muted" style="font-size:3rem;"></i>
-            <h5 class="mt-3">Select a Person</h5>
-            <p class="text-muted">Choose a person from the filter above to view their fee report.</p>
+        <div class="card-custom">
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-person-badge"></i></div>
+                <h6>Select a Person</h6>
+                <p>Choose a person from the filter above to view their fee report.</p>
+            </div>
         </div>
     @endif
 @endsection

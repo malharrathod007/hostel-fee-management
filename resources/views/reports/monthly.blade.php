@@ -13,7 +13,7 @@
     <div class="card-custom p-3 mb-4 no-print">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-6 col-md-3">
-                <label class="form-label small fw-500">Month</label>
+                <label class="micro-label">Month</label>
                 <select name="month" class="form-select form-select-sm">
                     @foreach($months as $num => $name)
                         <option value="{{ $num }}" {{ $month == $num ? 'selected' : '' }}>{{ $name }}</option>
@@ -21,7 +21,7 @@
                 </select>
             </div>
             <div class="col-6 col-md-3">
-                <label class="form-label small fw-500">Year</label>
+                <label class="micro-label">Year</label>
                 <select name="year" class="form-select form-select-sm">
                     @foreach($years as $y)
                         <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
@@ -45,13 +45,13 @@
         <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Collected</div>
-                <div class="stat-value" style="color:var(--success)">₹{{ number_format($totalPaid) }}</div>
+                <div class="stat-value text-success-c">₹{{ number_format($totalPaid) }}</div>
             </div>
         </div>
         <div class="col-4">
             <div class="stat-card text-center">
                 <div class="stat-label">Pending</div>
-                <div class="stat-value" style="color:var(--warning)">₹{{ number_format($totalPending) }}</div>
+                <div class="stat-value text-warning-c">₹{{ number_format($totalPending) }}</div>
             </div>
         </div>
     </div>
@@ -75,18 +75,28 @@
                 </thead>
                 <tbody>
                     @forelse($fees as $index => $fee)
-                    <tr>
+                    <tr style="--i: {{ min($index, 15) }}">
                         <td>{{ $index + 1 }}</td>
                         <td class="fw-500">{{ $fee->person->name }}</td>
                         <td>Room {{ $fee->person->room->room_number }}</td>
-                        <td>₹{{ number_format($fee->amount) }}</td>
-                        <td><span class="badge badge-{{ $fee->status }}">{{ ucfirst($fee->status) }}</span></td>
+                        <td class="fw-600">₹{{ number_format($fee->amount) }}</td>
+                        <td>
+                            <span class="pill pill-{{ $fee->status }}">
+                                <span class="pill-dot"></span>{{ ucfirst($fee->status) }}
+                            </span>
+                        </td>
                         <td>{{ $fee->paid_date ? $fee->paid_date->format('d M Y') : '-' }}</td>
                         <td>{{ $fee->payment_mode ? ucfirst($fee->payment_mode) : '-' }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No fee records for this month.</td>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="bi bi-calendar-month"></i></div>
+                                <h6>No fee records for this month</h6>
+                                <p>Pick a different month or year above.</p>
+                            </div>
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>

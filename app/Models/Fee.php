@@ -21,7 +21,9 @@ class Fee extends Model
 
     public function person()
     {
-        return $this->belongsTo(Person::class);
+        // withTrashed: fee history and reports must keep showing the person
+        // even after they are (soft) deleted.
+        return $this->belongsTo(Person::class)->withTrashed();
     }
 
     public function getMonthNameAttribute()
