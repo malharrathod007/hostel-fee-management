@@ -7,6 +7,7 @@ use App\Http\Controllers\PersonController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DepositController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes (guest only)
@@ -16,6 +17,12 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Gracefully handle people who type /logout directly in the browser (GET).
+// Actual logout must stay POST-only for CSRF protection.
+Route::get('logout', function () {
+    return redirect()->route(Auth::check() ? 'dashboard' : 'login');
+});
 
 // All protected routes
 Route::middleware('auth')->group(function () {
